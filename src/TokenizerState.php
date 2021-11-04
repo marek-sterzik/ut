@@ -2,7 +2,7 @@
 
 namespace Sterzik\Ut;
 
-use Sterzik\Ut\Exception\ParseException;
+use Exception;
 
 class TokenizerState
 {
@@ -78,15 +78,14 @@ class TokenizerState
 
     private function createToken(string $type, ?string $data = null): Token
     {
-        $position = $this->tokenFirstPosition;
-        $stateChangeCallback = function($state) use ($position) {
+        $stateChangeCallback = function($state) {
             if ($this->substate !== self::SUBSTATE_START || $this->tokenString !== '') {
-                throw new ParseException(sprintf("Invalid tokenizer state change to: %s", $state), $position);
+                throw new Exception(sprintf("Invalid tokenizer state change to: %s", $state));
             }
             $this->state = $state;
         };
 
-        $token = new Token($stateChangeCallback, $type, $data ?? $this->tokenString, $position);
+        $token = new Token($stateChangeCallback, $type, $data ?? $this->tokenString, $this->tokenFirstPosition);
 
         if ($data === null) {
             $this->tokenString = "";

@@ -1,0 +1,24 @@
+#!/usr/bin/php
+<?php
+
+require_once dirname(__DIR__)."/vendor/autoload.php";
+
+use Sterzik\Ut\Tokenizer;
+use Sterzik\Ut\TokenizerState;
+use Sterzik\Ut\Token;
+
+$tokenizer = new Tokenizer();
+
+$testString = '{if $apples>0}There are $apples {pl}apple-|s{/} on the tree.{else}No apple is on the tree.{/} There is also a $ sign $$. $a$bcd$e {floats .555 1.5 1e-3 1e+3 +++++++++++ }';
+
+echo "$testString\n\n";
+
+foreach ($tokenizer->tokenize($testString) as $token) {
+    if ($token->getType() === Token::TYPE_START_EXPR) {
+        $token->setState(TokenizerState::STATE_EXPR);
+    }
+    if ($token->getType() === Token::TYPE_OPERATOR && $token->getData() === '}') {
+        $token->setState(TokenizerState::STATE_NORMAL);
+    }
+    echo "$token\n";
+}
