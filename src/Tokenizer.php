@@ -2,13 +2,15 @@
 
 namespace Sterzik\Ut;
 
+use Generator;
+
 class Tokenizer
 {
     /**
      * Parse the given string to tokens
-     * @return iterable<Token>
+     * @return Generator<Token>
      */
-    public function tokenize(string $string): iterable
+    public function tokenize(string $string): Generator
     {
         $state = new TokenizerState();
         $n = strlen($string);

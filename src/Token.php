@@ -12,6 +12,11 @@ class Token
     const TYPE_IDENTIFIER = "identifier";
     const TYPE_STRING = "string";
     const TYPE_OPERATOR = "operator";
+    const TYPE_INTEGER = "integer";
+    const TYPE_FLOAT = "float";
+    const TYPE_INVALID = "invalid";
+    const TYPE_WHITE = "white";
+    const TYPE_EOF = "eof";
 
     /** @var callable */
     private $changeStateCallback;

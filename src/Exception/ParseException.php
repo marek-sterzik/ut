@@ -7,25 +7,17 @@ use Exception;
 
 class ParseException extends Exception
 {
-    /** @var int */
-    private $line;
-
-    /** @var int */
-    private $column;
+    /** @var array<int> */
+    private $position;
 
     public function __construct(string $message, array $position)
     {
         parent::__construct($message);
-        list($this->line, $this->column) = $position;
+        $this->position = $position;
     }
 
-    public function getLine(): int
+    public function getPosition(): array
     {
-        return $this->line;
-    }
-
-    public function getColumn(): int
-    {
-        return $this->column;
+        return $this->position;
     }
 }
