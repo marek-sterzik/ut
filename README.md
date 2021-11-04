@@ -1,10 +1,10 @@
-= μT - a microtemplating system
+# μT - a microtemplating system
 
 μT is a microtemplating system designed to maintain translations, but it may be used in a variety of other applications.
 μT is designed as an extensible system being able to easily add custom functionalities.
 
 
-== Syntax
+## Syntax
 
 
 Variable substitution:
