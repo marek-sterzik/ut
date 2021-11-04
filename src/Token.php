@@ -27,18 +27,15 @@ class Token
     /** @var string */
     private $data;
 
-    /** @var int */
-    private $line;
+    /** @var Position */
+    private $position;
 
-    /** @var int */
-    private $column;
-
-    public function __construct(callable $changeStateCallback, string $type, string $data, array $position)
+    public function __construct(callable $changeStateCallback, string $type, string $data, Position $position)
     {
         $this->changeStateCallback = $changeStateCallback;
         $this->type = $type;
         $this->data = $data;
-        list($this->line, $this->column) = $position;
+        $this->position = $position;
     }
 
     public function setState(string $state): self
@@ -60,7 +57,6 @@ class Token
 
     public function __toString()
     {
-        return sprintf("%s: %s (%s:%s)", $this->type, json_encode($this->data), $this->line, $this->column);
+        return sprintf("%s: %s (%s)", $this->type, json_encode($this->data), (string)$this->position);
     }
 }
-

@@ -3,6 +3,11 @@
 namespace Sterzik\Ut;
 
 use Exception;
+use Generator;
+
+/**
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ */
 
 class TokenizerState
 {
@@ -38,12 +43,15 @@ class TokenizerState
     private $state;
 
     /** @var string */
+    private $substate;
+
+    /** @var string */
     private $tokenString;
 
-    /** @var array<int> */
+    /** @var Position */
     private $tokenFirstPosition;
 
-    /** @var array|null */
+    /** @var array<string>|null */
     private $operatorsByLength = null;
 
     public function __construct()
@@ -51,7 +59,7 @@ class TokenizerState
         $this->state = self::STATE_NORMAL;
         $this->substate = self::SUBSTATE_START;
         $this->tokenString = "";
-        $this->tokenFirstPosition = [0, 0];
+        $this->tokenFirstPosition = new Position(0, 0);
         $this->operatorsByLength = null;
     }
 
@@ -65,7 +73,10 @@ class TokenizerState
         return $this;
     }
 
-    public function putChar(?string $char, array $position): iterable
+    /**
+     * @return Generator<Token>
+     */
+    public function putChar(?string $char, Position $position): Generator
     {
         if ($this->state === self::STATE_NORMAL) {
             return $this->putCharNormal($char, $position);
@@ -78,7 +89,7 @@ class TokenizerState
 
     private function createToken(string $type, ?string $data = null): Token
     {
-        $stateChangeCallback = function($state) {
+        $stateChangeCallback = function ($state) {
             if ($this->substate !== self::SUBSTATE_START || $this->tokenString !== '') {
                 throw new Exception(sprintf("Invalid tokenizer state change to: %s", $state));
             }
@@ -94,11 +105,16 @@ class TokenizerState
         return $token;
     }
 
+    /**
+     * @return array<string>
+     */
     private function getOperatorsByLength(): array
     {
         if ($this->operatorsByLength === null) {
             $this->operatorsByLength = self::OPERATORS;
-            usort($this->operatorsByLength, function ($a, $b){return strlen($b) - strlen($a);});
+            usort($this->operatorsByLength, function ($a, $b) {
+                return strlen($b) - strlen($a);
+            });
         }
         return $this->operatorsByLength;
     }
@@ -116,7 +132,10 @@ class TokenizerState
         return false;
     }
 
-    private function putCharInvalid(?string $char, array $position): iterable
+    /**
+     * @return Generator<Token>
+     */
+    private function putCharInvalid(?string $char, Position $position): Generator
     {
         $this->tokenFirstPosition = $position;
         $this->substate = self::SUBSTATE_START;
@@ -128,10 +147,14 @@ class TokenizerState
         }
     }
 
-    private function putCharExpr(?string $char, array $position): iterable
+    /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @return Generator<Token>
+     */
+    private function putCharExpr(?string $char, Position $position): Generator
     {
         $restart = true;
-        while($restart) {
+        while ($restart) {
             $restart = false;
             switch ($this->substate) {
                 case self::SUBSTATE_START:
@@ -181,7 +204,7 @@ class TokenizerState
                     break;
 
                 case self::SUBSTATE_DOLLAR:
-                    if($char !== null && $this->isIdentifierChar($char, true)) {
+                    if ($char !== null && $this->isIdentifierChar($char, true)) {
                         $this->tokenString .= $char;
                         $this->substate = self::SUBSTATE_VAR;
                     } else {
@@ -222,7 +245,6 @@ class TokenizerState
                                 if ($this->tokenString === '') {
                                     $this->substate = self::SUBSTATE_START;
                                 }
-
                             }
                         }
                     } else {
@@ -257,7 +279,7 @@ class TokenizerState
                         $this->tokenString .= $char;
                         $this->substate = self::SUBSTATE_DQSTRING_ESC;
                     } elseif ($char === '"') {
-                        yield $this->createToken(self::TYPE_STRING);
+                        yield $this->createToken(Token::TYPE_STRING);
                         $this->substate = self::SUBSTATE_START;
                     } else {
                         $this->tokenString .= $char;
@@ -269,7 +291,7 @@ class TokenizerState
                         $this->tokenString .= $char;
                         $this->substate = self::SUBSTATE_SQSTRING_ESC;
                     } elseif ($char === "'") {
-                        yield $this->createToken(self::TYPE_STRING);
+                        yield $this->createToken(Token::TYPE_STRING);
                         $this->substate = self::SUBSTATE_START;
                     } else {
                         $this->tokenString .= $char;
@@ -376,15 +398,17 @@ class TokenizerState
                     $this->tokenString .= $char;
                     yield $this->createToken(Token::TYPE_INVALID);
                     break;
-                    
             }
         }
     }
 
-    private function putCharNormal(?string $char, array $position): iterable
+    /**
+     * @return Generator<Token>
+     */
+    private function putCharNormal(?string $char, Position $position): Generator
     {
         $restart = true;
-        while($restart) {
+        while ($restart) {
             $restart = false;
             switch ($this->substate) {
                 case self::SUBSTATE_START:
@@ -421,7 +445,7 @@ class TokenizerState
                         $this->tokenString .= $char;
                         yield $this->createToken(Token::TYPE_DOLLAR);
                         $this->substate = self::SUBSTATE_START;
-                    } elseif($char !== null && $this->isIdentifierChar($char, true)) {
+                    } elseif ($char !== null && $this->isIdentifierChar($char, true)) {
                         $this->tokenString .= $char;
                         $this->substate = self::SUBSTATE_VAR;
                     } else {
